@@ -1,0 +1,245 @@
+package io.github.fast_startup
+
+import android.os.Looper
+import io.github.fast_startup.config.StartupConfig
+import io.github.fast_startup.dispatcher.DefaultDispatcher
+import io.github.fast_startup.exception.StartupException
+import io.github.fast_startup.exception.StartupExceptionMsg
+import io.github.fast_startup.extensions.getUniqueKey
+import io.github.fast_startup.listener.AllStartupCompleteListener
+import io.github.fast_startup.listener.StartupCompleteListener
+import io.github.fast_startup.listener.UIStartupCompleteListener
+import io.github.fast_startup.log.SLog
+import io.github.fast_startup.module.StartupSortStore
+import io.github.fast_startup.sort.SortUtil
+import io.github.fast_startup.utils.StartupCostTimesUtil
+
+/**
+ * Author: xuweiyu
+ * Date: 2021/12/5
+ * Email: wizz.xu@outlook.com
+ * Description:
+ */
+object FastStartup {
+
+    private var startupConfig: StartupConfig? = null
+
+    // ui线程startup执行完毕的回调
+    private var uiStartupCompleteListeners =
+        mutableListOf<UIStartupCompleteListener>()
+
+    // 所有的startup执行完毕的回调
+    private var allStartupCompleteListeners =
+        mutableListOf<AllStartupCompleteListener>()
+
+    // 每一个startup执行完毕的回调
+    private var startupCompleteListeners =
+        mutableListOf<StartupCompleteListener>()
+
+    private var startupCostTimesUtils: StartupCostTimesUtil? = null
+
+    private var startupSortStore: StartupSortStore? = null
+
+    private val aopStartups: MutableList<IStartup<*>> = mutableListOf()
+
+    private var isInit = false
+
+
+    /**
+     * 注册UI线程Startup都执行完毕的监听
+     */
+    fun registerUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener) {
+        uiStartupCompleteListeners.add(uiStartupCompleteListener)
+    }
+
+    /**
+     * 取消注册UI线程Startup都执行完毕的监听
+     */
+    fun unregisterUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener) {
+        val it: MutableIterator<UIStartupCompleteListener> =
+            uiStartupCompleteListeners.iterator()
+        while (it.hasNext()) {
+            val listener: UIStartupCompleteListener = it.next()
+            if (listener == uiStartupCompleteListener) {
+                it.remove()
+            }
+        }
+    }
+
+    /**
+     * 注册所有Startup都执行完毕的监听
+     */
+    fun registerAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener) {
+        allStartupCompleteListeners.add(allStartupCompleteListener)
+    }
+
+    /**
+     * 取消注册所有Startup都执行完毕的监听
+     */
+    fun unregisterAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener) {
+        val it: MutableIterator<AllStartupCompleteListener> =
+            allStartupCompleteListeners.iterator()
+        while (it.hasNext()) {
+            val listener: AllStartupCompleteListener = it.next()
+            if (listener == allStartupCompleteListener) {
+                it.remove()
+            }
+        }
+    }
+
+    /**
+     * 注册Startup执行完毕的监听
+     */
+    fun registerStartupCompleteListener(startupCompleteListener: StartupCompleteListener) {
+        startupCompleteListeners.add(startupCompleteListener)
+    }
+
+    /**
+     * 取消注册每一个Startup执行完毕的监听
+     */
+    fun unregisterStartupCompleteListener(startupCompleteListener: StartupCompleteListener) {
+        val it: MutableIterator<StartupCompleteListener> =
+            startupCompleteListeners.iterator()
+        while (it.hasNext()) {
+            val listener: StartupCompleteListener = it.next()
+            if (listener == startupCompleteListener) {
+                it.remove()
+            }
+        }
+    }
+
+    fun init(
+        startupConfig: StartupConfig? = null,
+    ): FastStartup {
+        if (isInit) {
+            SLog.i("FastStartup has init")
+            return this
+        }
+        isInit = true
+        FastStartup.startupConfig = startupConfig
+        startupConfig?.let { config ->
+            SLog.init(config.logLevel ?: Int.MAX_VALUE, "FastStartup")
+            config.enableTimeStatistics?.let {
+                if (it) {
+                    this.startupCostTimesUtils = StartupCostTimesUtil(it)
+                }
+            }
+            config.uiStartupCompleteListener?.let {
+                registerUIStartupCompleteListener(it)
+            }
+            config.allStartupCompleteListener?.let {
+                registerAllStartupCompleteListener(it)
+            }
+            config.startupCompleteListener?.let {
+                registerStartupCompleteListener(it)
+            }
+        }
+        SLog.i("FastStartup init succeed")
+        return this
+    }
+
+    /**
+     * 开始启动startup
+     */
+    fun start(startupList: List<IStartup<*>>? = null) {
+        startupCostTimesUtils?.initStartTime()
+        // 初始化检测
+        if (!isInit) {
+            throw StartupException(StartupExceptionMsg.NOT_INIT)
+        }
+        // 主线程检测
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            throw StartupException(StartupExceptionMsg.NOT_RUN_IN_MAIN_THREAD)
+        }
+        initAopStartup()
+        SLog.i("aopStartups", aopStartups)
+        val startupSortStore = SortUtil.sort(aopStartups.also {
+            startupList?.let { startupList ->
+                it.addAll(startupList)
+            }
+        }, startupConfig?.isDebug)
+        startupSortStore.also { FastStartup.startupSortStore = it }
+
+
+        val startupDispatcher = DefaultDispatcher(startupConfig)
+        startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
+            override fun startupComplete() {
+                allStartupCompleteListeners.forEach {
+                    it.startupComplete()
+                }
+                allStartupCompleteListeners.clear()
+                startupCompleteListeners.clear()
+            }
+
+        }
+        startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
+            override fun startupComplete() {
+                uiStartupCompleteListeners.forEach {
+                    it.startupComplete()
+                }
+                uiStartupCompleteListeners.clear()
+            }
+        }
+        startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
+            override fun startupComplete(startup: IStartup<*>) {
+                startupCompleteListeners.forEach {
+                    it.startupComplete(startup)
+                }
+            }
+        }
+        startupDispatcher.start(startupSortStore, startupCostTimesUtils)
+    }
+
+    /**
+     * 获取startup实例
+     */
+    fun <T : IStartup<*>> getStartup(clazz: Class<T>): T? {
+        if (clazz.isInterface) {
+            val inter = startupSortStore?.startupInterfaceMap?.get(clazz)
+            if (inter != null) {
+                startupSortStore?.startupMap?.get(inter.getUniqueKey())?.let {
+                    return it as T
+                }
+            }
+        }
+        startupSortStore?.startupMap?.get(clazz.getUniqueKey())?.let {
+            return it as T
+        }
+        return null
+    }
+
+    /**
+     * 获取组件启动后的返回值缓存
+     */
+    fun getStartupResult(clazz: Class<out IStartup<*>>): Any? {
+        if (clazz.isInterface) {
+            val inter = startupSortStore?.startupInterfaceMap?.get(clazz)
+            if (inter != null) {
+                return startupSortStore?.startupResultMap?.get(inter.getUniqueKey())
+            }
+        }
+        return startupSortStore?.startupResultMap?.get(clazz.getUniqueKey())
+    }
+
+    /**
+     * 请勿删除，供AOP插桩使用
+     */
+    private fun initAopStartup() {
+
+    }
+
+    /**
+     * 释放资源
+     */
+    fun free() {
+        this.isInit = false
+        this.startupCostTimesUtils = null
+        this.startupConfig = null
+        this.startupSortStore?.free()
+        this.startupSortStore = null
+        this.aopStartups.clear()
+        this.allStartupCompleteListeners.clear()
+        this.uiStartupCompleteListeners.clear()
+        this.startupCompleteListeners.clear()
+    }
+}

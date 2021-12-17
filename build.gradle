@@ -1,0 +1,52 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = "1.5.31"
+    ext.booster_version = '4.0.0'
+    ext.dokka_version = '1.5.30'
+    ext.fast_startup_transformer = '0.0.1'
+
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 1, 'minutes'
+            cacheDynamicVersionsFor 1, 'minutes'
+        }
+    }
+    repositories {
+        maven {
+            url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+        }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.2.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // 添加booster插件
+        classpath "com.didiglobal.booster:booster-gradle-plugin:$booster_version"
+        // 添加fast-startup-transformer依赖
+        classpath "io.github.wizzxu:fast-startup-transformer:$fast_startup_transformer"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
+    }
+}
+
+allprojects {
+
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 1, 'minutes'
+            cacheDynamicVersionsFor 1, 'minutes'
+        }
+    }
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+        }
+        jcenter() // Warning: this repository is going to shut down soon
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

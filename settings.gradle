@@ -1,0 +1,5 @@
+rootProject.name = "FastStartup"
+include ':app'
+include ':fast-startup'
+include ':fast-startup-api'
+include ':fast-startup-transform'
