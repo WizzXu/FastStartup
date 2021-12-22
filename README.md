@@ -2,7 +2,7 @@
 `FastStartup`是一个组件启动框架，旨在帮助开发人员能够简单、高效地进行各种组件的初始化操作。
 
 ## 特点
-简单、高效、支持节藕。
+简单、高效、支持解藕。
 没有过多的启动配置方式，只为提供简单的使用体验。
 全程无反射，无IO操作，能给您提供最快的启动速度。
 
@@ -12,7 +12,7 @@
 3.  组件支持配置运行在UI线程和非UI线程
 4.  支持UI线程等待操作，可以让UI线程阻塞到必要组件初始化完成，而必要组件可以运行在任意线程
 5.  支持组件初始化参数配置，您可以创建一个任意形式配置信息，该配置信息将贯穿所有组件的初始化操作
-6.  支持节藕，采用接口进行依赖管理，避免组件间的强依赖，让您的工程更加简洁
+6.  支持解藕，采用接口进行依赖管理，避免组件间的强依赖，让您的工程更加简洁
 7.  支持组件自动注入，提供AOP方案，让您无需再处理每一个组件，只需要一个注解就可以自动进行初始化，实现依赖即配置
 8.  支持组件完成回调，提供了三种回调，分别为每个组件初始化完成的回调、UI线程任务完成的回调、所有任务完成的回调
 9.  支持组件初始化耗时统计
@@ -117,10 +117,10 @@ Log.d("TestGetResult", "${FastStartup.getStartupResult(IA::class.java)}")
 ![cost_time](https://github.com/WizzXu/FastStartup/blob/main/pic/cost_time.png?raw=true)
 
 
-# FastStartup 高级用法 节藕、AOP
+# FastStartup 高级用法 解藕、AOP
 
-## 1. 节藕
-有的时候，我们组件是节藕的，对外提供接口，靠接口来进行依赖和调用，这种方式在FastStartup要怎么使用呢？
+## 1. 解藕
+有的时候，我们组件是解藕的，对外提供接口，靠接口来进行依赖和调用，这种方式在FastStartup要怎么使用呢？
 #### 1. 组件工程添加`IStartup`组件依赖
 ```
 dependencies {
@@ -222,7 +222,7 @@ FastStartup.init(StartupConfig(application = this, BuildConfig.DEBUG)).start())
 在开发的过程中也是参考了和借鉴了部分其他开源库，在此特感谢各位大佬。  
 
 [【Booster】](https://github.com/didi/booster) 一个优秀的AOP解决方案  
-[【android-startup】](https://github.com/idisfkj/android-startup) 一个优秀的Android启动方案，本组件的很多实现细节有参考`android-startup`，但是设计理念有些不同，并且提供了节藕方案、ASM插桩自动注册方案，去除了`android-startup`里面很多复杂的配置方式
+[【android-startup】](https://github.com/idisfkj/android-startup) 一个优秀的Android启动方案，本组件的很多实现细节有参考`android-startup`，但是设计理念有些不同，并且提供了解藕方案、ASM插桩自动注册方案，去除了`android-startup`里面很多复杂的配置方式
 
 
 ## License
