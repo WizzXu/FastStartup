@@ -221,8 +221,8 @@ FastStartup.init(StartupConfig(application = this, BuildConfig.DEBUG)).start())
 ## 感谢
 在开发的过程中也是参考了和借鉴了部分其他开源库，在此特感谢各位大佬。  
 
-[Booster](https://github.com/didi/booster) 一个优秀的AOP解决方案  
-[android-startup](https://github.com/idisfkj/android-startup) 一个优秀的Android启动方案，本组件的很多实现细节有参考`android-startup`，但是设计理念有些不同，并且提供了节藕方案、ASM插桩自动注册方案，去除了`android-startup`里面很多复杂的配置方式
+[【Booster】](https://github.com/didi/booster) 一个优秀的AOP解决方案  
+[【android-startup】](https://github.com/idisfkj/android-startup) 一个优秀的Android启动方案，本组件的很多实现细节有参考`android-startup`，但是设计理念有些不同，并且提供了节藕方案、ASM插桩自动注册方案，去除了`android-startup`里面很多复杂的配置方式
 
 
 ## License
