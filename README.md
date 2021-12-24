@@ -223,6 +223,7 @@ FastStartup.init(StartupConfig(application = this, BuildConfig.DEBUG)).start())
 
 [【Booster】](https://github.com/didi/booster) 一个优秀的AOP解决方案  
 [【android-startup】](https://github.com/idisfkj/android-startup) 一个优秀的Android启动方案，本组件的很多实现细节有参考`android-startup`，但是设计理念有些不同，并且提供了解藕方案、ASM插桩自动注册方案，去除了`android-startup`里面很多复杂的配置方式
+[【AndroidStartup】](https://github.com/Leifzhang/AndroidStartup) 一个优秀的Android启动方案，虾佬的杰作，换了种思路实现了Startup，添加DSL方式配置，也非常值得学习
 
 
 ## License
