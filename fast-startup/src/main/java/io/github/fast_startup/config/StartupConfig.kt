@@ -18,6 +18,11 @@ class StartupConfig {
     var enableTimeStatistics: Boolean? = null
     var params: Any? = null
 
+    /**
+     * 是否已经同意隐私协议
+     */
+    var isPrivacyAgree: Boolean? = null
+
     var startupCompleteListener: StartupCompleteListener? = null
     var uiStartupCompleteListener: UIStartupCompleteListener? = null
     var allStartupCompleteListener: AllStartupCompleteListener? = null
@@ -47,6 +52,28 @@ class StartupConfig {
         this.allStartupCompleteListener = allStartupCompleteListener
     }
 
+    constructor(
+        application: Application?,
+        isDebug: Boolean?,
+        logLevel: Int?,
+        enableTimeStatistics: Boolean?,
+        params: Any?,
+        isPrivacyAgree: Boolean?,
+        startupCompleteListener: StartupCompleteListener?,
+        uiStartupCompleteListener: UIStartupCompleteListener?,
+        allStartupCompleteListener: AllStartupCompleteListener?
+    ) {
+        this.application = application
+        this.isDebug = isDebug
+        this.logLevel = logLevel
+        this.enableTimeStatistics = enableTimeStatistics
+        this.params = params
+        this.isPrivacyAgree = isPrivacyAgree
+        this.startupCompleteListener = startupCompleteListener
+        this.uiStartupCompleteListener = uiStartupCompleteListener
+        this.allStartupCompleteListener = allStartupCompleteListener
+    }
+
 
     class Builder(
 
@@ -57,6 +84,7 @@ class StartupConfig {
         private var mLogLevel: Int? = Int.MAX_VALUE
         private var mEnableTimeStatistics: Boolean? = false
         private var mParams: Any? = null
+        private var mIsPrivacyAgree: Boolean? = null
 
         private var mStartupCompleteListener: StartupCompleteListener? = null
         private var mUiStartupCompleteListener: UIStartupCompleteListener? = null
@@ -82,6 +110,10 @@ class StartupConfig {
             mParams = params
         }
 
+        fun setIsPrivacyAgree(isPrivacyAgree: Boolean?) = apply {
+            mIsPrivacyAgree = isPrivacyAgree
+        }
+
         fun setStartupCompleteListener(startupCompleteListener: StartupCompleteListener?) = apply {
             mStartupCompleteListener = startupCompleteListener
         }
@@ -103,6 +135,7 @@ class StartupConfig {
                 mLogLevel,
                 mEnableTimeStatistics,
                 mParams,
+                mIsPrivacyAgree,
                 mStartupCompleteListener,
                 mUiStartupCompleteListener,
                 mAllStartupCompleteListener
