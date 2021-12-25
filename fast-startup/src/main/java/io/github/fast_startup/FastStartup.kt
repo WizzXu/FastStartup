@@ -44,6 +44,11 @@ object FastStartup {
 
     private var isInit = false
 
+    /**
+     * 是否已经同意隐私协议
+     */
+    private var isPrivacyAgree: Boolean? = null
+
 
     /**
      * 注册UI线程Startup都执行完毕的监听
@@ -133,6 +138,7 @@ object FastStartup {
             config.startupCompleteListener?.let {
                 registerStartupCompleteListener(it)
             }
+            this.isPrivacyAgree = config.isPrivacyAgree
         }
         SLog.i("FastStartup init succeed")
         return this

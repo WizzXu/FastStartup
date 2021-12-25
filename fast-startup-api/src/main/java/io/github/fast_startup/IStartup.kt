@@ -40,4 +40,9 @@ interface IStartup<T> {
      *组件启动完成
      */
     fun onStartCompleted() {}
+
+    /**
+     * 是否需要隐私同意之后才能执行
+     */
+    fun needPrivacyAgree(): Boolean = false
 }
