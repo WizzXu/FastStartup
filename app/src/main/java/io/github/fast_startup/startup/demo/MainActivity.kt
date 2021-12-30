@@ -23,8 +23,6 @@ class MainActivity : AppCompatActivity() {
             AllStartupCompleteListener {
             override fun startupComplete() {
                 SLog.e("registerAllStartupCompleteListener")
-                //FastStartup.setPrivacyAgree(true)
-                //FastStartup.reStart()
             }
         }).registerUIStartupCompleteListener(object : UIStartupCompleteListener {
             override fun startupComplete() {
@@ -36,8 +34,7 @@ class MainActivity : AppCompatActivity() {
                 SLog.e("registerStartupCompleteListener:${startup.javaClass.simpleName}")
             }
 
-        })
-        FastStartup.reStart()
+        }).reStart()
     }
 }
 
