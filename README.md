@@ -17,6 +17,8 @@
 8.  支持组件完成回调，提供了三种回调，分别为每个组件初始化完成的回调、UI线程任务完成的回调、所有任务完成的回调
 9.  支持组件初始化耗时统计
 10. 支持依赖缺失检测和依赖循环依赖检测
+11. 支持隐私模式启动，自动根据组件依赖关系和是否需要隐私模式启动进行初始化处理，能够在隐私权限授予后再次调用自动执行剩余任务
+12. 支持组件依赖关系打印
 
 ## 使用方式
 ### 1. 基础配置
@@ -117,7 +119,7 @@ Log.d("TestGetResult", "${FastStartup.getStartupResult(IA::class.java)}")
 ![cost_time](https://github.com/WizzXu/FastStartup/blob/main/pic/cost_time.png?raw=true)
 
 
-# FastStartup 高级用法 解藕、AOP
+# FastStartup 高级用法 解藕、AOP、隐私模式
 
 ## 1. 解藕
 有的时候，我们组件是解藕的，对外提供接口，靠接口来进行依赖和调用，这种方式在FastStartup要怎么使用呢？
@@ -216,7 +218,40 @@ FastStartup.init(StartupConfig(application = this, BuildConfig.DEBUG)).start())
 ```
 `start()`方法里面不需要传入任何内容，就可以自动注入组件啦
 
+## 3. 隐私模式启动
+#### 1. Startup创建的时候重写`needPrivacyAgree()`
+```
+override fun needPrivacyAgree(): Boolean {
+    return true
+}
+```
 
+#### 2. 授予隐私权限之后再次调用
+```
+FastStartup.init(StartupConfig(application = this, BuildConfig.DEBUG)).start(listOf(A(), B()))
+// 设置授予隐私权限并再次执行任务
+FastStartup.setPrivacyAgree(true).reStart()
+```
+*注意：* 各种监听器在一次隐私权限未授予的任务执行完毕之后，会销毁。授予隐私权限后需要重新设置任务监听器
+```
+FastStartup.setPrivacyAgree(true)
+.registerAllStartupCompleteListener(object :
+    AllStartupCompleteListener {
+    override fun startupComplete() {
+        SLog.e("registerAllStartupCompleteListener")
+    }
+}).registerUIStartupCompleteListener(object : UIStartupCompleteListener {
+    override fun startupComplete() {
+        SLog.e("registerUIStartupCompleteListener")
+
+    }
+}).registerStartupCompleteListener(object : StartupCompleteListener {
+    override fun startupComplete(startup: IStartup<*>) {
+        SLog.e("registerStartupCompleteListener:${startup.javaClass.simpleName}")
+    }
+
+}).reStart()
+```
 
 ## 感谢
 在开发的过程中也是参考了和借鉴了部分其他开源库，在此特感谢各位大佬。  

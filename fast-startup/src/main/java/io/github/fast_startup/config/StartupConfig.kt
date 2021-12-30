@@ -13,9 +13,25 @@ import io.github.fast_startup.listener.UIStartupCompleteListener
  */
 class StartupConfig {
     var application: Application? = null
+
+    /**
+     * 是否是debug模式
+     */
     var isDebug: Boolean? = null
+
+    /**
+     * 日志级别，对标 Log.VERBOSE ~ Log.ASSERT
+     */
     var logLevel: Int? = Int.MAX_VALUE
+
+    /**
+     * 是否开启耗时统计
+     */
     var enableTimeStatistics: Boolean? = null
+
+    /**
+     * 贯穿所有startup的附加参数，可以配置id之类的一些列参数
+     */
     var params: Any? = null
 
     /**
@@ -28,8 +44,19 @@ class StartupConfig {
      */
     var isPrintDependencies: Boolean? = null
 
+    /**
+     * 当有Startup任务执行完毕的回调
+     */
     var startupCompleteListener: StartupCompleteListener? = null
+
+    /**
+     * UI任务执行完毕的回调
+     */
     var uiStartupCompleteListener: UIStartupCompleteListener? = null
+
+    /**
+     * 所有任务执行完毕的回调
+     */
     var allStartupCompleteListener: AllStartupCompleteListener? = null
 
     constructor(application: Application?, isDebug: Boolean?) {
