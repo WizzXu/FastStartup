@@ -19,5 +19,8 @@ interface StartupExceptionMsg {
 
         // 没有初始化
         const val NOT_INIT: String = "FastStartup has not init"
+
+        // 没有先运行start方法
+        const val NOT_RUN_START: String = "Please run start() before run reStart()!"
     }
 }

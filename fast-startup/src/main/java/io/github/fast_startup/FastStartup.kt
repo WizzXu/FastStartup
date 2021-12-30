@@ -10,8 +10,9 @@ import io.github.fast_startup.listener.AllStartupCompleteListener
 import io.github.fast_startup.listener.StartupCompleteListener
 import io.github.fast_startup.listener.UIStartupCompleteListener
 import io.github.fast_startup.log.SLog
-import io.github.fast_startup.module.StartupSortStore
+import io.github.fast_startup.module.StartupInfoStore
 import io.github.fast_startup.sort.SortUtil
+import io.github.fast_startup.utils.DependenciesListCheckUtil
 import io.github.fast_startup.utils.StartupCostTimesUtil
 
 /**
@@ -26,19 +27,19 @@ object FastStartup {
 
     // ui线程startup执行完毕的回调
     private var uiStartupCompleteListeners =
-        mutableListOf<UIStartupCompleteListener>()
+        ArrayDeque<UIStartupCompleteListener>()
 
     // 所有的startup执行完毕的回调
     private var allStartupCompleteListeners =
-        mutableListOf<AllStartupCompleteListener>()
+        ArrayDeque<AllStartupCompleteListener>()
 
     // 每一个startup执行完毕的回调
     private var startupCompleteListeners =
-        mutableListOf<StartupCompleteListener>()
+        ArrayDeque<StartupCompleteListener>()
 
     private var startupCostTimesUtils: StartupCostTimesUtil? = null
 
-    private var startupSortStore: StartupSortStore? = null
+    private var startupInfoStore: StartupInfoStore? = null
 
     private val aopStartups: MutableList<IStartup<*>> = mutableListOf()
 
@@ -48,19 +49,28 @@ object FastStartup {
      * 是否已经同意隐私协议
      */
     private var isPrivacyAgree: Boolean? = null
+        get() = startupConfig?.isPrivacyAgree
 
+    /**
+     * 设置是否同意隐私
+     */
+    fun setPrivacyAgree(isPrivacyAgree: Boolean): FastStartup {
+        this.startupConfig?.isPrivacyAgree = isPrivacyAgree
+        return this
+    }
 
     /**
      * 注册UI线程Startup都执行完毕的监听
      */
-    fun registerUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener) {
+    fun registerUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener): FastStartup {
         uiStartupCompleteListeners.add(uiStartupCompleteListener)
+        return this
     }
 
     /**
      * 取消注册UI线程Startup都执行完毕的监听
      */
-    fun unregisterUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener) {
+    fun unregisterUIStartupCompleteListener(uiStartupCompleteListener: UIStartupCompleteListener): FastStartup {
         val it: MutableIterator<UIStartupCompleteListener> =
             uiStartupCompleteListeners.iterator()
         while (it.hasNext()) {
@@ -69,19 +79,21 @@ object FastStartup {
                 it.remove()
             }
         }
+        return this
     }
 
     /**
      * 注册所有Startup都执行完毕的监听
      */
-    fun registerAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener) {
+    fun registerAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener): FastStartup {
         allStartupCompleteListeners.add(allStartupCompleteListener)
+        return this
     }
 
     /**
      * 取消注册所有Startup都执行完毕的监听
      */
-    fun unregisterAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener) {
+    fun unregisterAllStartupCompleteListener(allStartupCompleteListener: AllStartupCompleteListener): FastStartup {
         val it: MutableIterator<AllStartupCompleteListener> =
             allStartupCompleteListeners.iterator()
         while (it.hasNext()) {
@@ -90,19 +102,22 @@ object FastStartup {
                 it.remove()
             }
         }
+
+        return this
     }
 
     /**
      * 注册Startup执行完毕的监听
      */
-    fun registerStartupCompleteListener(startupCompleteListener: StartupCompleteListener) {
+    fun registerStartupCompleteListener(startupCompleteListener: StartupCompleteListener): FastStartup {
         startupCompleteListeners.add(startupCompleteListener)
+        return this
     }
 
     /**
      * 取消注册每一个Startup执行完毕的监听
      */
-    fun unregisterStartupCompleteListener(startupCompleteListener: StartupCompleteListener) {
+    fun unregisterStartupCompleteListener(startupCompleteListener: StartupCompleteListener): FastStartup {
         val it: MutableIterator<StartupCompleteListener> =
             startupCompleteListeners.iterator()
         while (it.hasNext()) {
@@ -111,6 +126,7 @@ object FastStartup {
                 it.remove()
             }
         }
+        return this
     }
 
     fun init(
@@ -147,7 +163,7 @@ object FastStartup {
     /**
      * 开始启动startup
      */
-    fun start(startupList: List<IStartup<*>>? = null) {
+    fun start(startupList: List<IStartup<*>>? = null): FastStartup {
         startupCostTimesUtils?.initStartTime()
         // 初始化检测
         if (!isInit) {
@@ -158,42 +174,115 @@ object FastStartup {
             throw StartupException(StartupExceptionMsg.NOT_RUN_IN_MAIN_THREAD)
         }
         initAopStartup()
-        SLog.i("aopStartups", aopStartups)
-        val startupSortStore = SortUtil.sort(aopStartups.also {
-            startupList?.let { startupList ->
-                it.addAll(startupList)
-            }
-        }, startupConfig?.isDebug)
-        startupSortStore.also { FastStartup.startupSortStore = it }
-
-
-        val startupDispatcher = DefaultDispatcher(startupConfig)
-        startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
-            override fun startupComplete() {
-                allStartupCompleteListeners.forEach {
-                    it.startupComplete()
-                }
-                allStartupCompleteListeners.clear()
-                startupCompleteListeners.clear()
-            }
-
+        SLog.i("aopStartups:$aopStartups")
+        startupList?.let {
+            aopStartups.addAll(startupList)
         }
-        startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
-            override fun startupComplete() {
-                uiStartupCompleteListeners.forEach {
-                    it.startupComplete()
+
+        startupInfoStore = SortUtil.getPrivacyCheckStartup(aopStartups, startupConfig)
+        startupInfoStore?.let { startupInfoStore ->
+            // 环检测
+            DependenciesListCheckUtil.dependenciesListCheck(
+                startupList = aopStartups,
+                startupConfig = startupConfig, startupInfoStore = startupInfoStore
+            )
+            // 运行隐私检测通过的startup
+            SortUtil.sort(
+                startupInfoStore.privacyCheckPassStartupList,
+                startupConfig, startupInfoStore
+            ).let { startupSortStore ->
+                val startupDispatcher = DefaultDispatcher(startupConfig, startupInfoStore)
+                startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
+                    override fun startupComplete() {
+                        while (allStartupCompleteListeners.isNotEmpty()) {
+                            allStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                        }
+                        if (uiStartupCompleteListeners.isEmpty()) {
+                            startupCompleteListeners.clear()
+                        }
+                    }
                 }
-                uiStartupCompleteListeners.clear()
+                startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
+                    override fun startupComplete() {
+                        while (uiStartupCompleteListeners.isNotEmpty()) {
+                            uiStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                        }
+                        if (allStartupCompleteListeners.isEmpty()) {
+                            startupCompleteListeners.clear()
+                        }
+                    }
+                }
+                startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
+                    override fun startupComplete(startup: IStartup<*>) {
+                        startupCompleteListeners.forEach {
+                            it.startupComplete(startup)
+                        }
+                    }
+                }
+                startupDispatcher.start(startupSortStore, startupCostTimesUtils)
             }
         }
-        startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
-            override fun startupComplete(startup: IStartup<*>) {
-                startupCompleteListeners.forEach {
-                    it.startupComplete(startup)
+        return this
+    }
+
+    /**
+     * 重新执行需要隐私的Startup
+     */
+    fun reStart() {
+        if (isPrivacyAgree != true || startupInfoStore?.privacyCheckFailStartupList?.size == 0) {
+            SLog.e("隐私未同意或者没有需要隐私权限的Startup")
+            return
+        }
+        // 初始化检测
+        if (!isInit) {
+            throw StartupException(StartupExceptionMsg.NOT_INIT)
+        }
+        // 主线程检测
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            throw StartupException(StartupExceptionMsg.NOT_RUN_IN_MAIN_THREAD)
+        }
+        // 检测有没有先运行start()方法
+        if (startupInfoStore == null) {
+            throw StartupException(StartupExceptionMsg.NOT_RUN_START)
+        }
+        startupCostTimesUtils?.initStartTime()
+        startupInfoStore?.let { startupInfoStore ->
+            // 运行隐私检测通过的startup
+            SortUtil.sort(
+                startupInfoStore.privacyCheckFailStartupList,
+                startupConfig, startupInfoStore
+            ).let { startupSortStore ->
+                val startupDispatcher = DefaultDispatcher(startupConfig, startupInfoStore)
+                startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
+                    override fun startupComplete() {
+                        while (allStartupCompleteListeners.isNotEmpty()) {
+                            allStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                        }
+                        if (uiStartupCompleteListeners.isEmpty()) {
+                            startupCompleteListeners.clear()
+                        }
+                    }
                 }
+                startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
+                    override fun startupComplete() {
+                        while (uiStartupCompleteListeners.isNotEmpty()) {
+                            uiStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                        }
+                        if (allStartupCompleteListeners.isEmpty()) {
+                            startupCompleteListeners.clear()
+                        }
+                    }
+                }
+                startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
+                    override fun startupComplete(startup: IStartup<*>) {
+                        startupCompleteListeners.forEach {
+                            it.startupComplete(startup)
+                        }
+                    }
+                }
+                startupDispatcher.start(startupSortStore, startupCostTimesUtils)
             }
         }
-        startupDispatcher.start(startupSortStore, startupCostTimesUtils)
     }
 
     /**
@@ -201,14 +290,14 @@ object FastStartup {
      */
     fun <T : IStartup<*>> getStartup(clazz: Class<T>): T? {
         if (clazz.isInterface) {
-            val inter = startupSortStore?.startupInterfaceMap?.get(clazz)
+            val inter = startupInfoStore?.startupInterfaceMap?.get(clazz)
             if (inter != null) {
-                startupSortStore?.startupMap?.get(inter.getUniqueKey())?.let {
+                startupInfoStore?.startupMap?.get(inter.getUniqueKey())?.let {
                     return it as T
                 }
             }
         }
-        startupSortStore?.startupMap?.get(clazz.getUniqueKey())?.let {
+        startupInfoStore?.startupMap?.get(clazz.getUniqueKey())?.let {
             return it as T
         }
         return null
@@ -219,12 +308,12 @@ object FastStartup {
      */
     fun getStartupResult(clazz: Class<out IStartup<*>>): Any? {
         if (clazz.isInterface) {
-            val inter = startupSortStore?.startupInterfaceMap?.get(clazz)
+            val inter = startupInfoStore?.startupInterfaceMap?.get(clazz)
             if (inter != null) {
-                return startupSortStore?.startupResultMap?.get(inter.getUniqueKey())
+                return startupInfoStore?.startupResultMap?.get(inter.getUniqueKey())
             }
         }
-        return startupSortStore?.startupResultMap?.get(clazz.getUniqueKey())
+        return startupInfoStore?.startupResultMap?.get(clazz.getUniqueKey())
     }
 
     /**
@@ -241,8 +330,8 @@ object FastStartup {
         this.isInit = false
         this.startupCostTimesUtils = null
         this.startupConfig = null
-        this.startupSortStore?.free()
-        this.startupSortStore = null
+        this.startupInfoStore?.free()
+        this.startupInfoStore = null
         this.aopStartups.clear()
         this.allStartupCompleteListeners.clear()
         this.uiStartupCompleteListeners.clear()

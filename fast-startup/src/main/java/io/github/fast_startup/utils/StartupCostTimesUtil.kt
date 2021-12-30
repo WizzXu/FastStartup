@@ -47,6 +47,7 @@ internal class StartupCostTimesUtil(private var isOpenStatistics: Boolean = fals
                 name = startup::class.java.name,
                 callOnMainThread = startup.runOnUIThread(),
                 needUIThreadWait = startup.needUIThreadWait(),
+                needPrivacyAgree = startup.needPrivacyAgree(),
                 startTime = System.nanoTime(),
                 endTime = 0
             )
@@ -83,6 +84,10 @@ internal class StartupCostTimesUtil(private var isOpenStatistics: Boolean = fals
                 append("\n")
                 append("| ----------------------- | -------------------------------------------------")
                 append("\n")
+                append("|   Need Privacy Agree    |   ${it.needPrivacyAgree}")
+                append("\n")
+                append("| ----------------------- | -------------------------------------------------")
+                append("\n")
                 append("|       Cost Times        |   ${(it.endTime - it.startTime) / ACCURACY} ms")
                 append("\n")
                 append("|============================================================================")
@@ -94,6 +99,7 @@ internal class StartupCostTimesUtil(private var isOpenStatistics: Boolean = fals
             append("\n")
             append("|============================================================================")
         })
+        costTimesMap.clear()
     }
 
     private fun checkOpenStatistics() = isOpenStatistics
@@ -103,6 +109,7 @@ private data class CostTimesModel(
     val name: String,
     val callOnMainThread: Boolean,
     val needUIThreadWait: Boolean,
+    val needPrivacyAgree: Boolean,
     val startTime: Long,
     var endTime: Long = 0L
 )

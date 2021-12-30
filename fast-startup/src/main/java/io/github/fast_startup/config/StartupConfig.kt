@@ -23,6 +23,11 @@ class StartupConfig {
      */
     var isPrivacyAgree: Boolean? = null
 
+    /**
+     * 是否打印依赖关系
+     */
+    var isPrintDependencies: Boolean? = null
+
     var startupCompleteListener: StartupCompleteListener? = null
     var uiStartupCompleteListener: UIStartupCompleteListener? = null
     var allStartupCompleteListener: AllStartupCompleteListener? = null
@@ -59,6 +64,7 @@ class StartupConfig {
         enableTimeStatistics: Boolean?,
         params: Any?,
         isPrivacyAgree: Boolean?,
+        isPrintDependencies: Boolean?,
         startupCompleteListener: StartupCompleteListener?,
         uiStartupCompleteListener: UIStartupCompleteListener?,
         allStartupCompleteListener: AllStartupCompleteListener?
@@ -69,22 +75,21 @@ class StartupConfig {
         this.enableTimeStatistics = enableTimeStatistics
         this.params = params
         this.isPrivacyAgree = isPrivacyAgree
+        this.isPrintDependencies = isPrintDependencies
         this.startupCompleteListener = startupCompleteListener
         this.uiStartupCompleteListener = uiStartupCompleteListener
         this.allStartupCompleteListener = allStartupCompleteListener
     }
 
 
-    class Builder(
-
-    ) {
-
+    class Builder {
         private var mApplication: Application? = null
         private var mIsDebug: Boolean? = false
         private var mLogLevel: Int? = Int.MAX_VALUE
         private var mEnableTimeStatistics: Boolean? = false
         private var mParams: Any? = null
         private var mIsPrivacyAgree: Boolean? = null
+        private var mIsPrintDependencies: Boolean? = null
 
         private var mStartupCompleteListener: StartupCompleteListener? = null
         private var mUiStartupCompleteListener: UIStartupCompleteListener? = null
@@ -114,6 +119,10 @@ class StartupConfig {
             mIsPrivacyAgree = isPrivacyAgree
         }
 
+        fun setIsPrintDependencies(isPrintDependencies: Boolean?) = apply {
+            mIsPrintDependencies = isPrintDependencies
+        }
+
         fun setStartupCompleteListener(startupCompleteListener: StartupCompleteListener?) = apply {
             mStartupCompleteListener = startupCompleteListener
         }
@@ -136,6 +145,7 @@ class StartupConfig {
                 mEnableTimeStatistics,
                 mParams,
                 mIsPrivacyAgree,
+                mIsPrintDependencies,
                 mStartupCompleteListener,
                 mUiStartupCompleteListener,
                 mAllStartupCompleteListener
