@@ -5,6 +5,7 @@ import io.github.fast_startup.config.StartupConfig
 import io.github.fast_startup.dispatcher.IDispatcher
 import io.github.fast_startup.extensions.getUniqueKey
 import io.github.fast_startup.log.SLog
+import io.github.fast_startup.module.StartupInfoStore
 import io.github.fast_startup.module.StartupSortStore
 import io.github.fast_startup.utils.StartupCostTimesUtil
 
@@ -17,6 +18,7 @@ import io.github.fast_startup.utils.StartupCostTimesUtil
 internal class StartupRunnable(
     private val startup: IStartup<*>, private val startupConfig: StartupConfig?,
     private val startupSortStore: StartupSortStore,
+    private val startupInfoStore: StartupInfoStore,
     private val dispatcher: IDispatcher,
     private val startupCostTimesUtils: StartupCostTimesUtil? = null
 ) : Runnable {
@@ -26,7 +28,7 @@ internal class StartupRunnable(
         startupCostTimesUtils?.recordStart(startup)
         startup.start(startupConfig?.application, startupConfig?.isDebug, startupConfig?.params)
             ?.let {
-                startupSortStore.startupResultMap[startup.javaClass.getUniqueKey()] = it
+                startupInfoStore.startupResultMap[startup.javaClass.getUniqueKey()] = it
             }
         startupCostTimesUtils?.recordEnd(startup)
         SLog.d("结束执行：${startup.javaClass.getUniqueKey()} Thread:${Thread.currentThread().name}")

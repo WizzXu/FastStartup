@@ -1,11 +1,13 @@
 package io.github.fast_startup.utils
 
 import io.github.fast_startup.IStartup
+import io.github.fast_startup.config.StartupConfig
 import io.github.fast_startup.exception.StartupException
 import io.github.fast_startup.exception.StartupExceptionMsg
+import io.github.fast_startup.executor.ExecutorManager
 import io.github.fast_startup.extensions.getUniqueKey
 import io.github.fast_startup.log.SLog
-import java.util.*
+import io.github.fast_startup.module.StartupInfoStore
 
 /**
  * Author: xuweiyu
@@ -13,13 +15,31 @@ import java.util.*
  * Email: wizz.xu@outlook.com
  * Description:
  */
-class DependenciesListCheckUtil {
+internal class DependenciesListCheckUtil {
     companion object {
         @JvmStatic
         fun dependenciesListCheck(
             startupList: List<IStartup<*>>,
-            startupInterfaceMap: MutableMap<Class<*>, Class<out IStartup<*>>>,
+            startupConfig: StartupConfig?,
+            startupInfoStore: StartupInfoStore,
         ) {
+            // 下面开始进行环检测和依赖丢失情况的检测
+            if (startupConfig?.isDebug == true) {
+                val orderList = dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                DependenciesListPrintUtil.printDependenciesList(orderList, startupConfig, startupInfoStore)
+            } else {
+                ExecutorManager.instance.execute {
+                    val orderList = dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                    DependenciesListPrintUtil.printDependenciesList(orderList, startupConfig, startupInfoStore)
+                }
+            }
+        }
+
+        @JvmStatic
+        private fun dependenciesListCheck(
+            startupList: List<IStartup<*>>,
+            startupInterfaceMap: MutableMap<Class<*>, Class<out IStartup<*>>>,
+        ): ArrayDeque<String> {
             val startupMap: HashMap<String, IStartup<*>> = HashMap(startupList.size)
             val startupChildrenMap: HashMap<String, MutableSet<String>> = HashMap()
 
@@ -31,7 +51,7 @@ class DependenciesListCheckUtil {
                 // 计算统计入度， 入度为0则保存到0度列表
                 // 入度不为0，存放到startupChildrenMap并保存需要依赖的startup
                 if (it.dependencies().isNullOrEmpty()) {
-                    zeroDequeTmp.offer(uniqueKey)
+                    zeroDequeTmp.add(uniqueKey)
                 } else {
                     val dependencyTmp = mutableSetOf<String>()
                     it.dependencies()?.forEach { dep ->
@@ -52,7 +72,7 @@ class DependenciesListCheckUtil {
             val orderList = ArrayDeque<String>()
             orderList.addAll(zeroDequeTmp)
             while (!zeroDequeTmp.isEmpty()) {
-                zeroDequeTmp.poll()?.let { uniqueKey ->
+                zeroDequeTmp.removeFirstOrNull()?.let { uniqueKey ->
                     val it = startupChildrenMap.iterator()
                     while (it.hasNext()) {
                         val list = it.next()
@@ -60,16 +80,16 @@ class DependenciesListCheckUtil {
                             list.value.remove(uniqueKey)
                         }
                         if (list.value.size == 0) {
-                            zeroDequeTmp.offer(list.key)
+                            zeroDequeTmp.add(list.key)
                             it.remove()
-                            orderList.offer(list.key)
+                            orderList.add(list.key)
                         }
                     }
                 }
             }
 
             if (startupChildrenMap.size == 0) {
-                return
+                return orderList
             }
             // 有环或者依赖缺失
 

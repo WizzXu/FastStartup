@@ -7,6 +7,7 @@ import io.github.fast_startup.extensions.getUniqueKey
 import io.github.fast_startup.listener.AllStartupCompleteListener
 import io.github.fast_startup.listener.StartupCompleteListener
 import io.github.fast_startup.listener.UIStartupCompleteListener
+import io.github.fast_startup.module.StartupInfoStore
 import io.github.fast_startup.module.StartupSortStore
 import io.github.fast_startup.run.StartupRunnable
 import io.github.fast_startup.utils.StartupCostTimesUtil
@@ -19,7 +20,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * Email: wizz.xu@outlook.com
  * Description:
  */
-internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : IDispatcher {
+internal class DefaultDispatcher(
+    private val startupConfig: StartupConfig?,
+    private val startupInfoStore: StartupInfoStore
+) : IDispatcher {
 
     private lateinit var startupSortStore: StartupSortStore
 
@@ -50,7 +54,7 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         this.startupCostTimesUtils = startupCostTimesUtils
 
         uiThreadTaskSize.addAndGet(startupSortStore.uiThreadTaskSize)
-        allTaskSize.addAndGet(startupSortStore.startupMap.size)
+        allTaskSize.addAndGet(startupSortStore.allTaskSize)
         needUIThreadWaitTaskSize.addAndGet(startupSortStore.needUIThreadWaitTaskSize)
         this.startupSortStore = startupSortStore
 
@@ -64,8 +68,7 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         while (startup != null) {
             ExecutorManager.instance.execute(
                 StartupRunnable(
-                    startup, startupConfig,
-                    startupSortStore, this,
+                    startup, startupConfig, startupSortStore, startupInfoStore, this,
                     startupCostTimesUtils
                 )
             )
@@ -78,10 +81,7 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         while (uiThreadTaskSize.get() > 0 || needUIThreadWaitTaskSize.get() > 0) {
             if (startup != null) {
                 StartupRunnable(
-                    startup,
-                    startupConfig,
-                    startupSortStore,
-                    this,
+                    startup, startupConfig, startupSortStore, startupInfoStore, this,
                     startupCostTimesUtils
                 ).run()
             } else {
@@ -103,13 +103,17 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         }
 
         startupCompleteListener?.startupComplete(completeStartup)
+        // 移除所有需要依赖该startup的 依赖关联
+        startupInfoStore.allStartupDependenciesList.values.forEach {
+            it?.remove(uniqueKey)
+        }
 
         while (its.hasNext()) {
             val entry = its.next()
             entry.value.remove(uniqueKey)
-            if (entry.value.size == 0) {
+            if (entry.value.size == 0 || startupInfoStore.allStartupDependenciesList[entry.key].isNullOrEmpty()) {
                 its.remove()
-                startupSortStore.startupMap[entry.key]?.let { startup ->
+                startupInfoStore.startupMap[entry.key]?.let { startup ->
                     if (startup.runOnUIThread()) {
                         startupSortStore.uiZeroDeque.offer(startup)
                     } else {
@@ -121,10 +125,12 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         // 如果UI线程队列有任务，唤醒UI线程
         if (startupSortStore.uiZeroDeque.isNotEmpty()) {
             countDownLatch?.countDown()
+        } else {
+            this.startupCostTimesUtils?.recordUIThreadStartupsEnd()
         }
 
         if (completeStartup.needUIThreadWait()) {
-            if (needUIThreadWaitTaskSize.decrementAndGet() <= 0){
+            if (needUIThreadWaitTaskSize.decrementAndGet() < 1) {
                 this.startupCostTimesUtils?.recordUIThreadStartupsEnd()
                 countDownLatch?.countDown()
             }
@@ -135,7 +141,6 @@ internal class DefaultDispatcher(private val startupConfig: StartupConfig?) : ID
         } else {
             startupCostTimesUtils?.recordAllStartupsEnd()
             allStartupCompleteListener?.startupComplete()
-
             startupCostTimesUtils?.printAll()
         }
     }

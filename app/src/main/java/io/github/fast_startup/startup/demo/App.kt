@@ -8,6 +8,7 @@ import io.github.fast_startup.startup.demo.testgetresult.TestGetResult
 import io.github.fast_startup.startup.demo.testinterfaceimp.TestInterfaceImp
 import io.github.fast_startup.startup.demo.testmissing.TestMissing
 import io.github.fast_startup.startup.demo.testmultiadd.TestMultiAdd
+import io.github.fast_startup.startup.demo.testprivacy.TestPrivacy
 import io.github.fast_startup.startup.demo.testwaitmainthread.TestWaitMainThread
 
 /**
@@ -92,6 +93,8 @@ class App : Application() {
         TestTask.addTask(TestGetResult())
 
         TestTask.addTask(TestAop())
+
+        TestTask.addTask(TestPrivacy())
 
         TestTask.startNext()
 
