@@ -164,7 +164,6 @@ object FastStartup {
      * 开始启动startup
      */
     fun start(startupList: List<IStartup<*>>? = null): FastStartup {
-        startupCostTimesUtils?.initStartTime()
         // 初始化检测
         if (!isInit) {
             throw StartupException(StartupExceptionMsg.NOT_INIT)
@@ -173,6 +172,7 @@ object FastStartup {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw StartupException(StartupExceptionMsg.NOT_RUN_IN_MAIN_THREAD)
         }
+        startupCostTimesUtils?.initStartTime()
         initAopStartup()
         SLog.i("aopStartups:$aopStartups")
         startupList?.let {
@@ -186,41 +186,10 @@ object FastStartup {
                 startupList = aopStartups,
                 startupConfig = startupConfig, startupInfoStore = startupInfoStore
             )
+
             // 运行隐私检测通过的startup
-            SortUtil.sort(
-                startupInfoStore.privacyCheckPassStartupList,
-                startupConfig, startupInfoStore
-            ).let { startupSortStore ->
-                val startupDispatcher = DefaultDispatcher(startupConfig, startupInfoStore)
-                startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
-                    override fun startupComplete() {
-                        while (allStartupCompleteListeners.isNotEmpty()) {
-                            allStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
-                        }
-                        if (uiStartupCompleteListeners.isEmpty()) {
-                            startupCompleteListeners.clear()
-                        }
-                    }
-                }
-                startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
-                    override fun startupComplete() {
-                        while (uiStartupCompleteListeners.isNotEmpty()) {
-                            uiStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
-                        }
-                        if (allStartupCompleteListeners.isEmpty()) {
-                            startupCompleteListeners.clear()
-                        }
-                    }
-                }
-                startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
-                    override fun startupComplete(startup: IStartup<*>) {
-                        startupCompleteListeners.forEach {
-                            it.startupComplete(startup)
-                        }
-                    }
-                }
-                startupDispatcher.start(startupSortStore, startupCostTimesUtils)
-            }
+            DefaultDispatcher(startupConfig, startupInfoStore).also { setListeners(it) }
+                .start(startupInfoStore.fistFilterStartupSortStore, startupCostTimesUtils)
         }
         return this
     }
@@ -252,37 +221,40 @@ object FastStartup {
                 startupInfoStore.privacyCheckFailStartupList,
                 startupConfig, startupInfoStore
             ).let { startupSortStore ->
-                val startupDispatcher = DefaultDispatcher(startupConfig, startupInfoStore)
-                startupDispatcher.allStartupCompleteListener = object : AllStartupCompleteListener {
-                    override fun startupComplete() {
-                        while (allStartupCompleteListeners.isNotEmpty()) {
-                            allStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
-                        }
-                        if (uiStartupCompleteListeners.isEmpty()) {
-                            startupCompleteListeners.clear()
-                        }
-                    }
-                }
-                startupDispatcher.uiStartupCompleteListener = object : UIStartupCompleteListener {
-                    override fun startupComplete() {
-                        while (uiStartupCompleteListeners.isNotEmpty()) {
-                            uiStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
-                        }
-                        if (allStartupCompleteListeners.isEmpty()) {
-                            startupCompleteListeners.clear()
-                        }
-                    }
-                }
-                startupDispatcher.startupCompleteListener = object : StartupCompleteListener {
-                    override fun startupComplete(startup: IStartup<*>) {
-                        startupCompleteListeners.forEach {
-                            it.startupComplete(startup)
-                        }
-                    }
-                }
-                startupDispatcher.start(startupSortStore, startupCostTimesUtils)
+                DefaultDispatcher(startupConfig, startupInfoStore).also { setListeners(it) }
+                    .start(startupSortStore, startupCostTimesUtils)
             }
         }
+    }
+
+    private fun setListeners(startupDispatcher: DefaultDispatcher) {
+        object : AllStartupCompleteListener {
+            override fun startupComplete() {
+                while (allStartupCompleteListeners.isNotEmpty()) {
+                    allStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                }
+                if (uiStartupCompleteListeners.isEmpty()) {
+                    startupCompleteListeners.clear()
+                }
+            }
+        }.also { startupDispatcher.allStartupCompleteListener = it }
+        object : UIStartupCompleteListener {
+            override fun startupComplete() {
+                while (uiStartupCompleteListeners.isNotEmpty()) {
+                    uiStartupCompleteListeners.removeFirstOrNull()?.startupComplete()
+                }
+                if (allStartupCompleteListeners.isEmpty()) {
+                    startupCompleteListeners.clear()
+                }
+            }
+        }.also { startupDispatcher.uiStartupCompleteListener = it }
+        object : StartupCompleteListener {
+            override fun startupComplete(startup: IStartup<*>) {
+                startupCompleteListeners.forEach {
+                    it.startupComplete(startup)
+                }
+            }
+        }.also { startupDispatcher.startupCompleteListener = it }
     }
 
     /**

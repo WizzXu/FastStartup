@@ -25,12 +25,22 @@ internal class DependenciesListCheckUtil {
         ) {
             // 下面开始进行环检测和依赖丢失情况的检测
             if (startupConfig?.isDebug == true) {
-                val orderList = dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
-                DependenciesListPrintUtil.printDependenciesList(orderList, startupConfig, startupInfoStore)
+                val orderList =
+                    dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                DependenciesListPrintUtil.printDependenciesList(
+                    orderList,
+                    startupConfig,
+                    startupInfoStore
+                )
             } else {
                 ExecutorManager.instance.execute {
-                    val orderList = dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
-                    DependenciesListPrintUtil.printDependenciesList(orderList, startupConfig, startupInfoStore)
+                    val orderList =
+                        dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                    DependenciesListPrintUtil.printDependenciesList(
+                        orderList,
+                        startupConfig,
+                        startupInfoStore
+                    )
                 }
             }
         }
