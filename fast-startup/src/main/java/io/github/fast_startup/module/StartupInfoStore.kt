@@ -18,7 +18,7 @@ internal data class StartupInfoStore(
     /**
      * startup的集合 key为uniqueKey value为startup对象
      */
-    val startupMap: HashMap<String, IStartup<*>>,
+    val startupMap: MutableMap<String, IStartup<*>>,
 
     /**
      *  维护startup与其对外暴露的继承自Startup的接口 的 一一对应关系
@@ -41,7 +41,7 @@ internal data class StartupInfoStore(
     /**
      * 保存隐私检查通过的Startup
      */
-    val privacyCheckPassStartupList: ArrayDeque<IStartup<*>>,
+    val fistFilterStartupSortStore: StartupSortStore,
 
     /**
      * 保存隐私检查未通过的Startup
@@ -51,13 +51,13 @@ internal data class StartupInfoStore(
     /**
      * 所有startup的依赖关系
      */
-    val allStartupDependenciesList: MutableMap<String, MutableList<String>?>
+    val allStartupDependenciesList: MutableMap<String, MutableList<String>>
 ) {
     fun free() {
         startupMap.clear()
         startupInterfaceMap.clear()
         startupResultMap.clear()
-        privacyCheckPassStartupList.clear()
+        fistFilterStartupSortStore.free()
         privacyCheckFailStartupList.clear()
         allStartupDependenciesList.clear()
     }

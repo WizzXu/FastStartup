@@ -1,8 +1,6 @@
 package io.github.fast_startup.module
 
 import io.github.fast_startup.IStartup
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
 
 /**
  * Author: xuweiyu
@@ -13,14 +11,14 @@ import java.util.concurrent.ConcurrentLinkedDeque
 internal data class StartupSortStore(
 
     // 入度为0工作在ui线程的startup的队列
-    val uiZeroDeque: ConcurrentLinkedDeque<IStartup<*>>,
+    val uiZeroDeque: ArrayDeque<IStartup<*>>,
 
     // 入度为0工作在io线程的startup的队列
-    val ioZeroDeque: ConcurrentLinkedDeque<IStartup<*>>,
+    val ioZeroDeque: ArrayDeque<IStartup<*>>,
 
     // 维护入度不为0的startup的依赖表
     // 当一个startup(A)完成后，其他依赖该startup(A)的依赖表需要删除该startup(A)并进行重新计算
-    val startupChildrenMap: ConcurrentHashMap<String, MutableSet<String>>,
+    val startupChildrenMap: MutableMap<String, MutableList<String>>,
 
     // 工作在ui线程的startup的数量
     var uiThreadTaskSize: Int,

@@ -64,7 +64,7 @@ internal class DefaultDispatcher(
     }
 
     private fun dispatchOnIO() {
-        var startup = startupSortStore.ioZeroDeque.poll()
+        var startup = startupSortStore.ioZeroDeque.removeFirstOrNull()
         while (startup != null) {
             ExecutorManager.instance.execute(
                 StartupRunnable(
@@ -72,12 +72,12 @@ internal class DefaultDispatcher(
                     startupCostTimesUtils
                 )
             )
-            startup = startupSortStore.ioZeroDeque.poll()
+            startup = startupSortStore.ioZeroDeque.removeFirstOrNull()
         }
     }
 
     private fun dispatchOnMain() {
-        var startup: IStartup<*>? = startupSortStore.uiZeroDeque.poll()
+        var startup: IStartup<*>? = startupSortStore.uiZeroDeque.removeFirstOrNull()
         while (uiThreadTaskSize.get() > 0 || needUIThreadWaitTaskSize.get() > 0) {
             if (startup != null) {
                 StartupRunnable(
@@ -89,7 +89,7 @@ internal class DefaultDispatcher(
                 countDownLatch?.await()
             }
             countDownLatch = null
-            startup = startupSortStore.uiZeroDeque.poll()
+            startup = startupSortStore.uiZeroDeque.removeFirstOrNull()
         }
         this.startupCostTimesUtils?.recordUIThreadStartupsEnd()
     }
@@ -105,19 +105,19 @@ internal class DefaultDispatcher(
         startupCompleteListener?.startupComplete(completeStartup)
         // 移除所有需要依赖该startup的 依赖关联
         startupInfoStore.allStartupDependenciesList.values.forEach {
-            it?.remove(uniqueKey)
+            it.remove(uniqueKey)
         }
 
         while (its.hasNext()) {
             val entry = its.next()
             entry.value.remove(uniqueKey)
-            if (entry.value.size == 0 || startupInfoStore.allStartupDependenciesList[entry.key].isNullOrEmpty()) {
+            if (entry.value.isEmpty()) {
                 its.remove()
                 startupInfoStore.startupMap[entry.key]?.let { startup ->
                     if (startup.runOnUIThread()) {
-                        startupSortStore.uiZeroDeque.offer(startup)
+                        startupSortStore.uiZeroDeque.add(startup)
                     } else {
-                        startupSortStore.ioZeroDeque.offer(startup)
+                        startupSortStore.ioZeroDeque.add(startup)
                     }
                 }
             }
