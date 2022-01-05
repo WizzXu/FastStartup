@@ -19,7 +19,7 @@ import io.github.fast_startup.startup.demo.TestBase
 class TestPrivacy : TestBase {
     override fun test() {
         val startups = mutableListOf<IStartup<*>>()
-        startups.add(C())
+        //startups.add(C())
         startups.add(A())
         startups.add(B())
         startups.add(D())
@@ -31,18 +31,18 @@ class TestPrivacy : TestBase {
                 .setLogLevel(Log.DEBUG)
                 .setIsPrintDependencies(true)
                 .build()
-        ).registerAllStartupCompleteListener(object : AllStartupCompleteListener{
+        ).registerAllStartupCompleteListener(object : AllStartupCompleteListener {
             override fun startupComplete() {
                 SLog.e("registerAllStartupCompleteListener")
                 //FastStartup.setPrivacyAgree(true)
                 //FastStartup.reStart()
             }
-        }).registerUIStartupCompleteListener(object : UIStartupCompleteListener{
+        }).registerUIStartupCompleteListener(object : UIStartupCompleteListener {
             override fun startupComplete() {
                 SLog.e("registerUIStartupCompleteListener")
 
             }
-        }).registerStartupCompleteListener(object : StartupCompleteListener{
+        }).registerStartupCompleteListener(object : StartupCompleteListener {
             override fun startupComplete(startup: IStartup<*>) {
                 SLog.e("registerStartupCompleteListener:${startup.javaClass.simpleName}")
             }
@@ -54,7 +54,7 @@ class TestPrivacy : TestBase {
 
 class A : IStartup<String> {
     override fun start(context: Context?, isDebug: Boolean?, any: Any?): String? {
-        SLog.e("A()")
+        //SLog.e("A()")
         return null
     }
 
@@ -65,7 +65,7 @@ class A : IStartup<String> {
 
 class B : IStartup<String> {
     override fun start(context: Context?, isDebug: Boolean?, any: Any?): String? {
-        SLog.e("B()")
+        //SLog.e("B()")
 
         return null
     }
@@ -97,7 +97,7 @@ class C : IStartup<String> {
 
 class D : IStartup<String> {
     override fun start(context: Context?, isDebug: Boolean?, any: Any?): String? {
-        SLog.e("D()")
+        //SLog.e("D()")
 
         return null
     }
@@ -105,20 +105,21 @@ class D : IStartup<String> {
     override fun dependencies(): List<Class<out IStartup<*>>>? {
         return null
     }
+
     override fun runOnUIThread(): Boolean {
-        return true
+        return false
     }
 }
 
 class E : IStartup<String> {
     override fun start(context: Context?, isDebug: Boolean?, any: Any?): String? {
-        SLog.e("E()")
+        //SLog.e("E()")
 
         return null
     }
 
     override fun runOnUIThread(): Boolean {
-        return true
+        return false
     }
 
     override fun dependencies(): List<Class<out IStartup<*>>>? {

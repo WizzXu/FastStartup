@@ -76,25 +76,25 @@ class App : Application() {
         ).start()*/
 
         // 测试环
-        TestTask.addTask(TestCircle())
+        //TestTask.addTask(TestCircle())
 //
 //        //测试依缺失
-        TestTask.addTask(TestMissing())
+        //TestTask.addTask(TestMissing())
 //
 //        //测试依赖接口方式
-        TestTask.addTask(TestInterfaceImp())
+        //TestTask.addTask(TestInterfaceImp())
 //
 //        //测试多次添加
-        TestTask.addTask(TestMultiAdd())
+        //TestTask.addTask(TestMultiAdd())
 
-        //测试主线程需要等待子线程完成
-        TestTask.addTask(TestWaitMainThread())
+        //TestTask.addTask(TestGetResult())
 
-        TestTask.addTask(TestGetResult())
-
-        TestTask.addTask(TestAop())
+        //TestTask.addTask(TestAop())
 
         TestTask.addTask(TestPrivacy())
+
+        //测试主线程需要等待子线程完成
+        //TestTask.addTask(TestWaitMainThread())
 
         TestTask.startNext()
 

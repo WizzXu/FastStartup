@@ -199,7 +199,10 @@ object FastStartup {
      */
     fun reStart() {
         if (isPrivacyAgree != true || startupInfoStore?.privacyCheckFailStartupList?.size == 0) {
-            SLog.e("隐私未同意或者没有需要隐私权限的Startup")
+            SLog.i(
+                "隐私同意状态：${isPrivacyAgree} \n " +
+                        "需要隐私权限的Startup数量：${startupInfoStore?.privacyCheckFailStartupList?.size ?: 0}"
+            )
             return
         }
         // 初始化检测

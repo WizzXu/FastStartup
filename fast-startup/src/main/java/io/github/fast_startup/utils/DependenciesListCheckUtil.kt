@@ -25,8 +25,7 @@ internal class DependenciesListCheckUtil {
         ) {
             // 下面开始进行环检测和依赖丢失情况的检测
             if (startupConfig?.isDebug == true) {
-                val orderList =
-                    dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                val orderList = dependenciesListCheck(startupList)
                 DependenciesListPrintUtil.printDependenciesList(
                     orderList,
                     startupConfig,
@@ -34,8 +33,7 @@ internal class DependenciesListCheckUtil {
                 )
             } else {
                 ExecutorManager.instance.execute {
-                    val orderList =
-                        dependenciesListCheck(startupList, startupInfoStore.startupInterfaceMap)
+                    val orderList = dependenciesListCheck(startupList)
                     DependenciesListPrintUtil.printDependenciesList(
                         orderList,
                         startupConfig,
@@ -48,10 +46,19 @@ internal class DependenciesListCheckUtil {
         @JvmStatic
         private fun dependenciesListCheck(
             startupList: List<IStartup<*>>,
-            startupInterfaceMap: MutableMap<Class<*>, Class<out IStartup<*>>>,
         ): ArrayDeque<String> {
             val startupMap: HashMap<String, IStartup<*>> = HashMap(startupList.size)
             val startupChildrenMap: HashMap<String, MutableSet<String>> = HashMap()
+            val startupInterfaceMap = mutableMapOf<Class<*>, Class<out IStartup<*>>>()
+
+            // 构建startupInterfaceMap依赖关系表
+            startupList.forEach { startup ->
+                startup::class.java.interfaces.forEach {
+                    if (it.interfaces.contains(IStartup::class.java)) {
+                        startupInterfaceMap[it] = startup.javaClass
+                    }
+                }
+            }
 
             val zeroDequeTmp = ArrayDeque<String>()
             startupList.forEach {

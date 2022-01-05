@@ -1,5 +1,6 @@
 # FastStartup
-`FastStartup`是一个组件启动框架，旨在帮助开发人员能够简单、高效地进行各种组件的初始化操作。
+`FastStartup`是一个组件启动框架，旨在帮助开发人员能够简单、高效地进行各种组件的初始化操作。  
+[【更新记录】](https://github.com/WizzXu/FastStartup/blob/main/CHANGE_LOG.md)
 
 ## 特点
 简单、高效、支持解藕。
@@ -25,7 +26,8 @@
 在项目工程目录下`build.gradle`中添加依赖
 ```
 dependencies {
-    implementation "io.github.wizzxu:fast-startup:0.0.1"
+    //请使用最新版本
+    implementation "io.github.wizzxu:fast-startup:0.0.2"
 }
 ```
 ### 2. 组件初始化
@@ -110,13 +112,16 @@ Log.d("TestGetResult", "${FastStartup.getStartupResult(IA::class.java)}")
 ## 依赖环检测和缺失检测
 在FastStartup启动的时候会自动进行依赖环检测和缺失检测
 如果依赖有环，会抛出异常并会打印如下信息
-![dep_pic_1](https://github.com/WizzXu/FastStartup/blob/main/pic/dep_pic_1.png?raw=true)
+![dep_pic_1](https://raw.githubusercontent.com/WizzXu/FastStartup/main/pic/dep_pic_1.png)
 
 如果依赖有缺失，会打印如下消息
-![dep_pic_2](https://github.com/WizzXu/FastStartup/blob/main/pic/dep_pic_2.png?raw=true)
+![dep_pic_2](https://raw.githubusercontent.com/WizzXu/FastStartup/main/pic/dep_pic_2.png)
 
 ## 耗时统计
-![cost_time](https://github.com/WizzXu/FastStartup/blob/main/pic/cost_time.png?raw=true)
+![cost_time](https://raw.githubusercontent.com/WizzXu/FastStartup/main/pic/cost_time.png)
+
+## 依赖关系打印
+![dep_list_pic](https://raw.githubusercontent.com/WizzXu/FastStartup/main/pic/dep_list_pic.png)
 
 
 # FastStartup 高级用法 解藕、AOP、隐私模式
@@ -126,7 +131,8 @@ Log.d("TestGetResult", "${FastStartup.getStartupResult(IA::class.java)}")
 #### 1. 组件工程添加`IStartup`组件依赖
 ```
 dependencies {
-    implementation "io.github.wizzxu:fast-startup-api:0.0.1"
+    //请使用最新版本
+    implementation "io.github.wizzxu:fast-startup-api:0.0.2"
 }
 ```
 组件接口必须直接继承`IStartup`
@@ -167,7 +173,7 @@ AOP方案的实现基于[Booster](https://github.com/didi/booster)实现
 buildscript {
     ext.kotlin_version = "1.5.31"
     ext.booster_version = '4.0.0'
-    ext.fast_startup_transformer = '0.0.1'
+    ext.fast_startup_transformer = '0.0.1'//请使用最新版本
 
     dependencies {
         // 添加booster插件
