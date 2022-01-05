@@ -130,7 +130,7 @@ internal object SortUtil {
         startupList.forEach {
             val uniqueKey = it::class.java.getUniqueKey()
             if (startupMap.containsKey(uniqueKey)) {
-                throw StartupException("$uniqueKey ${StartupExceptionMsg.MULTI_ADD}")
+                throw StartupException("[$uniqueKey] ${StartupExceptionMsg.MULTI_ADD}")
             }
             // 保存所有startup
             startupMap[uniqueKey] = it
@@ -138,7 +138,7 @@ internal object SortUtil {
             val realDepList: MutableList<String> = mutableListOf()
             it.dependencies()?.forEach { dep ->
                 if (dep.isInterface) {
-                    realDepList.add(startupInterfaceMap[dep]!!.getUniqueKey())
+                    startupInterfaceMap[dep]?.let { it1 -> realDepList.add(it1.getUniqueKey()) }
                 } else {
                     realDepList.add(dep.getUniqueKey())
                 }
