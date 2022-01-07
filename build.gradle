@@ -1,9 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = "1.5.31"
-    ext.booster_version = '4.0.0'
-    ext.dokka_version = '1.5.30'
-    ext.fast_startup_transformer = '0.0.1'
+    ext {
+        kotlin_version = "1.5.31"
+        booster_version = '4.0.0'
+        dokka_version = '1.5.30'
+
+        fast_startup = '0.0.5'
+        fast_startup_api = '0.0.5'
+        fast_startup_transformer = '0.0.1'
+    }
 
     configurations.all {
         resolutionStrategy {
@@ -12,9 +17,8 @@ buildscript {
         }
     }
     repositories {
-        maven {
-            url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-        }
+        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots" }
+        maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
         google()
         mavenCentral()
     }
@@ -30,19 +34,25 @@ buildscript {
 }
 
 allprojects {
-
     configurations.all {
         resolutionStrategy {
             cacheChangingModulesFor 1, 'minutes'
             cacheDynamicVersionsFor 1, 'minutes'
         }
     }
+    if ("true" == rootProject.isDebugModule) {
+        configurations.all {
+            resolutionStrategy.dependencySubstitution {
+                substitute module("io.github.wizzxu:fast-startup-api") using project(":fast-startup-api")
+                substitute module("io.github.wizzxu:fast-startup") using project(":fast-startup")
+            }
+        }
+    }
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-        }
+        maven { url "https://s01.oss.sonatype.org/content/repositories/iogithubwizzxu-1018/" }
+        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         jcenter() // Warning: this repository is going to shut down soon
     }
 }
