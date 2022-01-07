@@ -20,7 +20,7 @@ task androidSourcesJar(type: Jar) {
 ext {
     PUBLISH_GROUP_ID = 'io.github.wizzxu'
     PUBLISH_ARTIFACT_ID = 'fast-startup'
-    PUBLISH_VERSION = '0.0.2'
+    PUBLISH_VERSION = '0.0.5'
 }
 
 // leave them empty to allow compilation

@@ -76,18 +76,18 @@ class App : Application() {
         ).start()*/
 
         // 测试环
-        //TestTask.addTask(TestCircle())
+        TestTask.addTask(TestCircle())
 //
 //        //测试依缺失
-        //TestTask.addTask(TestMissing())
-//
-//        //测试依赖接口方式
-        //TestTask.addTask(TestInterfaceImp())
+        TestTask.addTask(TestMissing())
+
+        //测试依赖接口方式
+        TestTask.addTask(TestInterfaceImp())
 //
 //        //测试多次添加
-        //TestTask.addTask(TestMultiAdd())
+        TestTask.addTask(TestMultiAdd())
 
-        //TestTask.addTask(TestGetResult())
+        TestTask.addTask(TestGetResult())
 
         //TestTask.addTask(TestAop())
 
